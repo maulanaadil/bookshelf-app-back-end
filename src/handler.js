@@ -14,17 +14,17 @@ const addBooksHandler = (request, h) => {
     } = request.payload;
 
     // Client tidak melampirkan properti namepada request body.
-    if(!name || name === "") {
+    if (!name || name === "") {
         const response = h.response({
-           status: `fail`,
+            status: `fail`,
             message: `Gagal menambahkan buku. Mohon isi nama buku`,
         });
-    response.code(400);
-    return response;
+        response.code(400);
+        return response;
     }
 
     // Client melampirkan nilai properti readPage yang lebih besar dari nilai properti pageCount.
-    if(readPage > pageCount) {
+    if (readPage > pageCount) {
         const response = h.response({
             status: `fail`,
             message: `Gagal menambahkan buku. Readpage tidak boleh lebih besar dari pageCount`,
@@ -55,7 +55,7 @@ const addBooksHandler = (request, h) => {
     books.push(newBook);
 
     // Ngecek Jika success ditambahkan
-    const isSuccess = books.filter((book)=> book.id === id).length > 0;
+    const isSuccess = books.filter((book) => book.id === id).length > 0;
     if (isSuccess) {
         const response = h.response({
             status: `success`,
@@ -78,4 +78,121 @@ const addBooksHandler = (request, h) => {
 
 };
 
-module.exports = {addBooksHandler};
+const getAllBooksHandler = (request, h) => {
+    const {name, reading, finished} = request.query;
+
+    if (name) {
+        const getAllBooksDicoding = books
+            .filter((book) => book.name.toLowerCase().includes(name.toLowerCase()))
+            .map((book) => ({
+                id: book.id,
+                name: book.name,
+                publisher: book.publisher,
+            }));
+        const response = h.response({
+            status: `success`,
+            data: {
+                books: getAllBooksDicoding,
+            },
+        });
+        response.code(200);
+        return response;
+    }
+
+    if (reading) {
+        let getAllReadBooks;
+        if (reading === `0`) {
+            getAllReadBooks = books
+                .filter((book) => book.reading === false)
+                .map((book) => ({
+                    id: book.id,
+                    name: book.name,
+                    publisher: book.publisher,
+                }));
+        } else {
+            books.filter((book) => book.realm === true);
+            books.map((book) => ({
+                id: book.id,
+                name: book.name,
+                publisher: book.publisher,
+            }));
+        }
+        const response = h.response({
+            status: `success`,
+            data: {
+                books: getAllReadBooks,
+            }
+        });
+        response.code(200);
+        return response;
+    }
+
+    if (finished) {
+        let getAllFinishedBook;
+        if (finished === `1`) {
+            getAllFinishedBook = books
+                .filter((book) => book.finished === true)
+                .map((book) => ({
+                    id: book.id,
+                    name: book.name,
+                    publisher: book.publisher,
+                }));
+        } else {
+            books.filter((book) => book.finished === false);
+            books.map((book) => ({
+                id: book.id,
+                name: book.name,
+                publisher: book.publisher,
+            }));
+        }
+        const response = h.response({
+            status: `success`,
+            data: {
+                books: getAllFinishedBook,
+            }
+        });
+        response.code(200);
+        return response;
+    }
+
+    const getAllBooks = books.map((book) => ({
+        id: book.id,
+        name: book.name,
+        publisher: book.publisher,
+    }));
+
+    const response = h.response({
+        status: `success`,
+        data: {
+            books: getAllBooks,
+        }
+    });
+    response.code(200);
+    return response;
+
+};
+
+const getBooksByIdHandler = (request, h) => {
+    const {bookId} = request.params;
+
+    const book = books.filter((n) => n.id === bookId)[0];
+
+    if (book) {
+        const response = h.response({
+            status: `success`,
+            data: {
+                book,
+            },
+        });
+        response.code(200);
+        return response;
+    }
+
+    const response = h.response({
+        status: `fail`,
+        message: `Buku tidak ditemukan`,
+    });
+    response.code(404);
+    return response;
+};
+module.exports = {addBooksHandler, getAllBooksHandler, getBooksByIdHandler};
