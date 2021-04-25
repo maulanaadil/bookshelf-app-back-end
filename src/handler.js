@@ -27,7 +27,7 @@ const addBooksHandler = (request, h) => {
     if (readPage > pageCount) {
         const response = h.response({
             status: `fail`,
-            message: `Gagal menambahkan buku. Readpage tidak boleh lebih besar dari pageCount`,
+            message: `Gagal menambahkan buku. readPage tidak boleh lebih besar dari pageCount`,
         });
         response.code(400);
         return response;
@@ -110,12 +110,13 @@ const getAllBooksHandler = (request, h) => {
                     publisher: book.publisher,
                 }));
         } else {
-            books.filter((book) => book.realm === true);
-            books.map((book) => ({
-                id: book.id,
-                name: book.name,
-                publisher: book.publisher,
-            }));
+            getAllReadBooks = books
+                .filter((book) => book.reading === true)
+                .map((book) => ({
+                    id: book.id,
+                    name: book.name,
+                    publisher: book.publisher,
+                }));
         }
         const response = h.response({
             status: `success`,
@@ -138,12 +139,13 @@ const getAllBooksHandler = (request, h) => {
                     publisher: book.publisher,
                 }));
         } else {
-            books.filter((book) => book.finished === false);
-            books.map((book) => ({
-                id: book.id,
-                name: book.name,
-                publisher: book.publisher,
-            }));
+            getAllFinishedBook = books
+                .filter((book) => book.finished === false)
+                .map((book) => ({
+                    id: book.id,
+                    name: book.name,
+                    publisher: book.publisher,
+                }));
         }
         const response = h.response({
             status: `success`,
@@ -195,4 +197,91 @@ const getBooksByIdHandler = (request, h) => {
     response.code(404);
     return response;
 };
-module.exports = {addBooksHandler, getAllBooksHandler, getBooksByIdHandler};
+
+const editBookByHandler = (request, h) => {
+    const {bookId} = request.params;
+    const {
+        name,
+        year,
+        author,
+        summary,
+        publisher,
+        pageCount,
+        readPage,
+        reading
+    } = request.payload;
+
+    const index = books.findIndex((book) => book.id === bookId);
+    const updatedAt = new Date().toISOString();
+
+    if (!name || name === "") {
+        const response = h.response({
+            status: `fail`,
+            message: `Gagal memperbarui buku. Mohon isi nama buku`,
+        });
+        response.code(400);
+        return response;
+    }
+
+    if (readPage > pageCount) {
+        const response = h.response({
+            status: `fail`,
+            message: `Gagal memperbarui buku. readPage tidak boleh lebih besar dari pageCount`,
+        });
+        response.code(400);
+        return response;
+    }
+
+    if (index !== -1) {
+        books[index] = {
+            ...books[index],
+            name,
+            year,
+            author,
+            summary,
+            publisher,
+            pageCount,
+            readPage,
+            reading,
+            updatedAt,
+        };
+
+        const response = h.response({
+            status: `success`,
+            message: `Buku berhasil diperbarui`,
+        });
+        response.code(200);
+        return response;
+    }
+
+    const response = h.response({
+        status: `fail`,
+        message: `Gagal memperbarui buku. Id tidak ditemukan`,
+    });
+    response.code(404);
+    return response;
+};
+
+const deleteBookByIdHandler = (request, h) => {
+    const {bookId} = request.params;
+
+    const index = books.findIndex((book) => book.id === bookId);
+
+    if (index !== -1) {
+        books.splice(index, 1);
+        const response = h.response({
+            status: `success`,
+            message: `Buku berhasil dihapus`,
+        });
+        response.code(200);
+        return response;
+    }
+
+    const response = h.response({
+        status: `fail`,
+        message: `Buku gagal dihapus. Id tidak ditemukan`,
+    });
+    response.code(404);
+    return response;
+};
+module.exports = {addBooksHandler, getAllBooksHandler, getBooksByIdHandler, editBookByHandler, deleteBookByIdHandler};
